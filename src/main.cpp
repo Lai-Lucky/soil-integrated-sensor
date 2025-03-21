@@ -6,6 +6,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <ArduinoJson.h>
 
 /**************函数声明***************/
 uint16_t CRC16(const uint8_t *data, uint16_t length);
@@ -14,6 +15,7 @@ void parseModbusData(const uint8_t *data, uint16_t len);
 void setup_wifi();
 void callback(char* topic, byte* payload, unsigned int length);
 void reconnect();
+void sendSensorData(double data) ;
 
 /**************WiFi 配置**************/
 const char* ssid = "abc";         // WiFi SSID
@@ -116,20 +118,8 @@ void parseModbusData(const uint8_t *data, uint16_t len) {
     uint16_t regValue = (data[3] << 8) | data[4];  
     double value = (double)regValue / 10.0;  
 
-    // **JSON 格式**
-    String jsonPayload = "{";
-    jsonPayload += "\"id\":\"001\",";
-    jsonPayload += "\"version\":\"2.0\",";
-    jsonPayload += "\"params\":{";
-    jsonPayload += "\"" + String(sensor_names[asr]) + "\":{\"value\":" + String(value, 2);
-    jsonPayload += "}}}";
-
-    // **检测 MQTT 发送状态**
-    if (client.publish(pubTopic, jsonPayload.c_str())) {
-      Serial.println("数据发送成功: " + jsonPayload);
-    } else {
-      Serial.println("数据发送失败!");
-    }
+    sendSensorData(value);
+    
   }
 }
 
@@ -171,5 +161,25 @@ void reconnect() {
       Serial.printf("连接失败, 状态码=%d, 5秒后重试...\n", client.state());
       delay(5000);
     }
+  }
+}
+
+/************JSON数据构建************/
+void sendSensorData(double data) 
+{
+  JsonDocument doc;
+  doc["id"] = String(millis());  // 使用时间戳作为唯一ID
+  doc["version"] = "1.0";
+  doc["params"][sensor_names[asr]]["value"]= data;
+
+  String payload;
+  serializeJson(doc, payload);
+  if (client.publish(pubTopic, payload.c_str())) 
+  {
+    Serial.println("数据已发送: " + payload);
+  } 
+  else 
+  {
+    Serial.println("发送失败");
   }
 }
