@@ -116,7 +116,7 @@ void parseModbusData(const uint8_t *data, uint16_t len) {
     uint16_t regValue = (data[3] << 8) | data[4];  
     double value = (double)regValue / 10.0;  
 
-    // **修正 JSON 格式**
+    // **JSON 格式**
     String jsonPayload = "{";
     jsonPayload += "\"id\":\"001\",";
     jsonPayload += "\"version\":\"2.0\",";
