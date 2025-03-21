@@ -26,7 +26,7 @@ const char* device_id = "test-v1";
 const char* product_id = "ix3yxLe12r"; 
 const char* api_key = "version=2018-10-31&res=products%2Fix3yxLe12r%2Fdevices%2Ftest-v1&et=999986799814791288&method=md5&sign=aLfwfxqst6gFtQuC3WhnLA%3D%3D";
 
-// MQTT 主题
+// **修正 MQTT 主题**
 const char* pubTopic = "$sys/ix3yxLe12r/test-v1/thing/property/post";
 
 WiFiClient espClient;
@@ -85,7 +85,7 @@ void loop() {
     }
   }
 
-  delay(2000);
+  delay(1000);
 }
 
 /************* CRC 计算 *************/
@@ -110,29 +110,25 @@ bool checkCRC(const uint8_t *data, uint16_t len) {
 
 /************* 解析 Modbus 数据并上传 MQTT *************/
 void parseModbusData(const uint8_t *data, uint16_t len) {
-  Serial.print("数据 (HEX): ");
-  for (uint16_t i = 0; i < len; i++) {
-    Serial.printf("%02X ", data[i]);
-  }
-  Serial.println();
+  Serial.println("解析数据:\n");
 
-  if (data[1] == 0x03) {  // 确保是读取寄存器
-    double value = ((data[3] << 8) | data[4]) / 10.0;
-    Serial.printf("%s: %.2f\n", sensor_names[asr], value);
+  if (data[1] == 0x03) {  
+    uint16_t regValue = (data[3] << 8) | data[4];  
+    double value = (double)regValue / 10.0;  
 
-    // 生成 JSON 数据
-    String jsonPayload = "{\"id\":\"soil-v1\",\"params\":{\"";
-    jsonPayload += sensor_names[asr];
-    jsonPayload += "\":{\"value\":";
-    jsonPayload += String(value, 6);
+    // **修正 JSON 格式**
+    String jsonPayload = "{";
+    jsonPayload += "\"id\":\"001\",";
+    jsonPayload += "\"version\":\"2.0\",";
+    jsonPayload += "\"params\":{";
+    jsonPayload += "\"" + String(sensor_names[asr]) + "\":{\"value\":" + String(value, 2);
     jsonPayload += "}}}";
 
-    // 发送 MQTT 数据
-    if (client.connected()) {
-      client.publish(pubTopic, jsonPayload.c_str());
-      Serial.println("已发送数据: " + jsonPayload);
+    // **检测 MQTT 发送状态**
+    if (client.publish(pubTopic, jsonPayload.c_str())) {
+      Serial.println("数据发送成功: " + jsonPayload);
     } else {
-      Serial.println("MQTT 连接失败，数据未发送");
+      Serial.println("数据发送失败!");
     }
   }
 }
@@ -143,7 +139,7 @@ void setup_wifi() {
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+    delay(1000);
     Serial.print(".");
   }
 
@@ -170,9 +166,9 @@ void reconnect() {
 
     if (client.connect(device_id, product_id, api_key)) {
       Serial.println("连接成功!");
-      client.subscribe(pubTopic);  // 订阅数据推送主题
+      client.subscribe("$sys/ix3yxLe12r/test-v1/thing/service/property/set"); // 订阅属性下发
     } else {
-      Serial.printf("连接失败, 状态码=%d,5秒后重试...\n", client.state());
+      Serial.printf("连接失败, 状态码=%d, 5秒后重试...\n", client.state());
       delay(5000);
     }
   }
