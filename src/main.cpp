@@ -77,6 +77,7 @@ void loop() {
   // 发送请求
   Serial2.write(send_byte[asr], 8);
   Serial.printf("发送查询: %s\n", sensor_names[asr]);
+  Serial.println();
 
   delay(200);
 
@@ -84,7 +85,6 @@ void loop() {
   if (Serial2.available()) {
     Serial2.readBytes(temp, sizeof(temp));
     Serial.println("接收传感器数据");
-    Serial.println();
     parseModbusData(temp, sizeof(temp));
 
     if (checkCRC(temp, sizeof(temp))) {
@@ -125,6 +125,7 @@ void parseModbusData(const uint8_t *data, uint16_t len) {
     uint16_t regValue = (data[3] << 8) | data[4];  
     double value = (double)regValue / 10.0;  
     Serial.printf("解析数据:%f\n",value);
+    Serial.println();
     sendSensorData(value);
     
   }
@@ -147,12 +148,13 @@ void setup_wifi() {
 
 /************* MQTT 订阅回调函数 *************/
 void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("收到 MQTT 消息，主题: ");
+  Serial.print("收到 MQTT 消息，主题: \n");
   Serial.println(topic);
   Serial.print("内容: ");
   for (int i = 0; i < length; i++) {
     Serial.print((char)payload[i]);
   }
+  Serial.println();
   Serial.println();
 }
 
