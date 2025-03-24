@@ -1,14 +1,14 @@
 // 攀登：土壤传感器 - OneNet 物联网接入
 // 供电：12V
 // 通信：RS485-TTL
-// 版本：2.0（新增 MQTT 数据上传）
+
 
 #include <Arduino.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 
-/**************函数声明***************/
+/************** 函数声明 ***************/
 uint16_t CRC16(const uint8_t *data, uint16_t length);
 bool checkCRC(const uint8_t *data, uint16_t len);
 void parseModbusData(const uint8_t *data, uint16_t len);
@@ -17,18 +17,18 @@ void callback(char* topic, byte* payload, unsigned int length);
 void reconnect();
 void sendSensorData(double data) ;
 
-/**************WiFi 配置**************/
+/************** WiFi 配置 **************/
 const char* ssid = "abc";         // WiFi SSID
 const char* password = "12345678"; // WiFi 密码
 
-/************OneNet MQTT 配置************/
+/************ OneNet MQTT 配置 ************/
 const char* mqtt_server = "mqtts.heclouds.com";  
 const int mqtt_port = 1883; 
 const char* device_id = "test-v1";    
 const char* product_id = "ix3yxLe12r"; 
 const char* api_key = "version=2018-10-31&res=products%2Fix3yxLe12r%2Fdevices%2Ftest-v1&et=999986799814791288&method=md5&sign=aLfwfxqst6gFtQuC3WhnLA%3D%3D";
 
-// **修正 MQTT 主题**
+// **MQTT 主题**
 const char* pubTopic = "$sys/ix3yxLe12r/test-v1/thing/property/post";
 
 WiFiClient espClient;
@@ -46,11 +46,11 @@ const byte send_byte[6][8] = {
 
 const char* sensor_names[] = {"soil-PH", "soil-T", "soil-H", "soil-N", "soil-P", "soil-K"};
 
-/********变量********/
+/******** 变量 ********/
 byte temp[7]; // 传感器返回数据
 int asr = 0;  // 传感器轮询索引
 
-/*************程序初始化*************/
+/************* 程序初始化 *************/
 void setup() {
   Serial.begin(9600);
   Serial2.begin(9600);
@@ -60,7 +60,7 @@ void setup() {
   client.setCallback(callback);
 }
 
-/*************主循环*************/
+/************* 主循环 *************/
 void loop() {
   if (!client.connected()) {
     reconnect();
@@ -110,7 +110,7 @@ bool checkCRC(const uint8_t *data, uint16_t len) {
   return computedCRC == receivedCRC;
 }
 
-/************* 解析 Modbus 数据并上传 MQTT *************/
+/************* 解析数据并上传 *************/
 void parseModbusData(const uint8_t *data, uint16_t len) {
   Serial.println("解析数据:\n");
 
@@ -169,7 +169,7 @@ void sendSensorData(double data)
 {
   JsonDocument doc;
   doc["id"] = String(millis());  // 使用时间戳作为唯一ID
-  doc["version"] = "1.0";
+  doc["version"] = "2.2";
   doc["params"][sensor_names[asr]]["value"]= data;
 
   String payload;
