@@ -30,6 +30,7 @@ const char* api_key = "version=2018-10-31&res=products%2Fix3yxLe12r%2Fdevices%2F
 
 // **MQTT 主题**
 const char* pubTopic = "$sys/ix3yxLe12r/test-v1/thing/property/post";
+const char* replyTopic="$sys/ix3yxLe12r/test-v1/thing/property/post/reply";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -76,7 +77,8 @@ void loop() {
   // 读取响应数据
   if (Serial2.available()) {
     Serial2.readBytes(temp, sizeof(temp));
-    Serial.println("接收传感器数据:");
+    Serial.println("接收传感器数据");
+    Serial.println();
     parseModbusData(temp, sizeof(temp));
 
     if (checkCRC(temp, sizeof(temp))) {
@@ -112,12 +114,11 @@ bool checkCRC(const uint8_t *data, uint16_t len) {
 
 /************* 解析数据并上传 *************/
 void parseModbusData(const uint8_t *data, uint16_t len) {
-  Serial.println("解析数据:\n");
 
   if (data[1] == 0x03) {  
     uint16_t regValue = (data[3] << 8) | data[4];  
     double value = (double)regValue / 10.0;  
-
+    Serial.printf("解析数据:%f\n",value);
     sendSensorData(value);
     
   }
@@ -156,9 +157,22 @@ void reconnect() {
 
     if (client.connect(device_id, product_id, api_key)) {
       Serial.println("连接成功!");
-      client.subscribe("$sys/ix3yxLe12r/test-v1/thing/service/property/set"); // 订阅属性下发
+      client.subscribe(replyTopic); // 订阅属性下发
     } else {
       Serial.printf("连接失败, 状态码=%d, 5秒后重试...\n", client.state());
+      switch (client.state()) 
+      {
+        case -4: Serial.println("连接超时"); break;
+        case -3: Serial.println("连接丢失"); break;
+        case -2: Serial.println("连接失败"); break;
+        case -1: Serial.println("断开连接"); break;
+        case 1: Serial.println("协议错误"); break;
+        case 2: Serial.println("客户端标识无效"); break;
+        case 3: Serial.println("服务器不可用"); break;
+        case 4: Serial.println("用户名或密码错误"); break;
+        case 5: Serial.println("未授权"); break;
+        default: Serial.println("未知错误");
+      }
       delay(5000);
     }
   }
@@ -169,7 +183,7 @@ void sendSensorData(double data)
 {
   JsonDocument doc;
   doc["id"] = String(millis());  // 使用时间戳作为唯一ID
-  doc["version"] = "2.2";
+  doc["version"] = "1.0";
   doc["params"][sensor_names[asr]]["value"]= data;
 
   String payload;
@@ -182,4 +196,6 @@ void sendSensorData(double data)
   {
     Serial.println("发送失败");
   }
+
+  delay(200);
 }
