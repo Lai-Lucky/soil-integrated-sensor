@@ -45,7 +45,13 @@ const byte send_byte[6][8] = {
   {0x01,0x03,0x00,0x20,0x00,0x01,0x85,0xC0}  // 钾
 };
 
-const char* sensor_names[] = {"soil-PH", "soil-T", "soil-H", "soil-N", "soil-P", "soil-K"};
+/************ OneNet平台的属性标识符 ************/
+const char* sensor_names[] = {"soil-PH"/*酸碱度*/, 
+                              "soil-T"/*温度*/, 
+                              "soil-H"/*湿度*/, 
+                              "soil-N"/*氮*/, 
+                              "soil-P"/*磷*/, 
+                              "soil-K"/*钾*/};
 
 /******** 变量 ********/
 byte temp[7]; // 传感器返回数据
