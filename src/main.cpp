@@ -69,7 +69,8 @@ void setup() {
 
 /************* 主循环 *************/
 void loop() {
-  if (!client.connected()) {
+  if (!client.connected()) 
+  {
     reconnect();
   }
   client.loop();
@@ -82,15 +83,19 @@ void loop() {
   delay(200);
 
   // 读取响应数据
-  if (Serial2.available()) {
+  if (Serial2.available()) 
+  {
     Serial2.readBytes(temp, sizeof(temp));
     Serial.println("接收传感器数据");
     parseModbusData(temp, sizeof(temp));
 
-    if (checkCRC(temp, sizeof(temp))) {
+    if (checkCRC(temp, sizeof(temp))) 
+    {
       Serial.println("CRC 校验成功\n");
       asr = (asr + 1) % 6; // 轮询下一个传感器
-    } else {
+    } 
+    else 
+    {
       Serial.println("CRC 校验失败\n");
     }
   }
@@ -101,9 +106,11 @@ void loop() {
 /************* CRC 计算 *************/
 uint16_t CRC16(const uint8_t *data, uint16_t length) {
   uint16_t crc = 0xFFFF;
-  for (uint16_t i = 0; i < length; i++) {
+  for (uint16_t i = 0; i < length; i++) 
+  {
     crc ^= data[i];
-    for (uint8_t j = 0; j < 8; j++) {
+    for (uint8_t j = 0; j < 8; j++) 
+    {
       crc = (crc & 1) ? (crc >> 1) ^ 0xA001 : crc >> 1;
     }
   }
@@ -136,7 +143,8 @@ void setup_wifi() {
   Serial.println("连接 WiFi...");
   WiFi.begin(ssid, password);
 
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED) 
+  {
     delay(1000);
     Serial.print(".");
   }
@@ -151,7 +159,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("收到 MQTT 消息，主题: \n");
   Serial.println(topic);
   Serial.print("内容: ");
-  for (int i = 0; i < length; i++) {
+  for (int i = 0; i < length; i++) 
+  {
     Serial.print((char)payload[i]);
   }
   Serial.println();
@@ -160,13 +169,17 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 /************* 连接 MQTT 服务器 *************/
 void reconnect() {
-  while (!client.connected()) {
+  while (!client.connected()) 
+  {
     Serial.print("连接 OneNet MQTT...");
 
-    if (client.connect(device_id, product_id, api_key)) {
+    if (client.connect(device_id, product_id, api_key)) 
+    {
       Serial.println("连接成功!");
       client.subscribe(replyTopic); // 订阅属性下发
-    } else {
+    } 
+    else 
+    {
       Serial.printf("连接失败, 状态码=%d, 5秒后重试...\n", client.state());
       switch (client.state()) 
       {
