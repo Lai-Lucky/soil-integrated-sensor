@@ -85,11 +85,12 @@ void loop() {
   // 读取响应数据
   if (Serial2.available()) 
   {
-    Serial2.readBytes(temp, sizeof(temp));
+    int len = Serial2.available();
+    Serial2.readBytes(temp, len);
     Serial.println("接收传感器数据");
-    parseModbusData(temp, sizeof(temp));
+    parseModbusData(temp, len);
 
-    if (checkCRC(temp, sizeof(temp))) 
+    if (checkCRC(temp, len)) 
     {
       Serial.println("CRC 校验成功\n");
       asr = (asr + 1) % 6; // 轮询下一个传感器
@@ -128,15 +129,31 @@ bool checkCRC(const uint8_t *data, uint16_t len) {
 /************* 解析数据并上传 *************/
 void parseModbusData(const uint8_t *data, uint16_t len) {
 
-  if (data[1] == 0x03) {  
-    uint16_t regValue = (data[3] << 8) | data[4];  
-    double value = (double)regValue / 10.0;  
-    Serial.printf("解析数据:%f\n",value);
-    Serial.println();
-    sendSensorData(value);
-    
+  if (data[1] == 0x03) 
+  {
+    uint16_t dataLength = data[2]; // 数据字节数
+
+    if (dataLength == 2) 
+    {  // 7字节
+      uint16_t regValue = (data[3] << 8) | data[4];
+      double value = regValue / 10.0;
+      Serial.printf("解析数据: %f\n", value);
+      sendSensorData(value);
+    } 
+    else if (dataLength == 4) 
+    { // 9字节
+      uint16_t regValue_H = (data[3] << 8) | data[4];
+      uint16_t regValue_L = (data[5] << 8) | data[6];
+      uint32_t regValue = (regValue_H << 16) | regValue_L;
+      Serial.printf("解析数据: %d\n", regValue);
+      sendSensorData((int32_t)regValue);
+    } 
+    else {
+      Serial.println("数据长度异常");
+    }
   }
 }
+
 
 /************* WiFi 连接 *************/
 void setup_wifi() {
