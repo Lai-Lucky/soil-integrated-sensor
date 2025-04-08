@@ -28,9 +28,10 @@ const char* device_id = "test-v1";
 const char* product_id = "ix3yxLe12r"; 
 const char* api_key = "version=2018-10-31&res=products%2Fix3yxLe12r%2Fdevices%2Ftest-v1&et=999986799814791288&method=md5&sign=aLfwfxqst6gFtQuC3WhnLA%3D%3D";
 
-// **MQTT 主题**
+/************** MQTT 主题 ***************/
 const char* pubTopic = "$sys/ix3yxLe12r/test-v1/thing/property/post";
 const char* replyTopic="$sys/ix3yxLe12r/test-v1/thing/property/post/reply";
+
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -53,6 +54,15 @@ const char* sensor_names[] = {"soil-PH"/*酸碱度*/,
                               "soil-P"/*磷*/, 
                               "soil-K"/*钾*/};
 
+
+/************ 串口屏属性标识符 ************/
+const char* lcd_names[] = {"n0"/*酸碱度*/, 
+                           "n1"/*温度*/, 
+                           "n2"/*湿度*/, 
+                           "n3"/*氮*/, 
+                           "n4"/*磷*/, 
+                           "n5"/*钾*/};
+
 /******** 变量 ********/
 byte temp[7]; // 传感器返回数据
 int asr = 0;  // 传感器轮询索引
@@ -69,17 +79,29 @@ void setup() {
 
 /************* 主循环 *************/
 void loop() {
-  if (!client.connected()) 
+
+  /* 屏幕状态显示 */
+  if(WiFi.status() != WL_CONNECTED)
+  Serial.printf("t6.pco=RED\xff\xff\xff");
+  else 
+  Serial.printf("t6.pco=GREEN\xff\xff\xff");
+  delay(200);
+  if(!client.connected())
   {
+    Serial.printf("t7.pco=RED\xff\xff\xff");
     reconnect();
   }
+  else 
+  Serial.printf("t7.pco=GREEN\xff\xff\xff");
+  delay(200);
+
   client.loop();
+
 
   // 发送请求
   Serial2.write(send_byte[asr], 8);
   Serial.printf("发送查询: %s\n", sensor_names[asr]);
   Serial.println();
-
   delay(200);
 
   // 读取响应数据
@@ -158,6 +180,10 @@ void parseModbusData(const uint8_t *data, uint16_t len) {
 /************* WiFi 连接 *************/
 void setup_wifi() {
   Serial.println("连接 WiFi...");
+
+  Serial.printf("t6.pco=RED\xff\xff\xff");
+  delay(200);
+
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) 
@@ -167,6 +193,10 @@ void setup_wifi() {
   }
 
   Serial.println("\nWiFi 连接成功!");
+
+  Serial.printf("t6.pco=GREEN\xff\xff\xff");
+  delay(200);
+
   Serial.print("IP 地址: ");
   Serial.println(WiFi.localIP());
 }
@@ -188,15 +218,24 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void reconnect() {
   while (!client.connected()) 
   {
-    Serial.print("连接 OneNet MQTT...");
+    Serial.printf("t7.pco=RED\xff\xff\xff");
+    delay(200);
 
+    Serial.print("连接 OneNet MQTT...");
     if (client.connect(device_id, product_id, api_key)) 
     {
-      Serial.println("连接成功!");
+      Serial.println("连接成功!\n");
+
+      Serial.printf("t7.pco=GREEN\xff\xff\xff");
+      delay(200);
+
       client.subscribe(replyTopic); // 订阅属性下发
     } 
     else 
     {
+      Serial.printf("t7.bco=RED\xff\xff\xff");
+      delay(200);
+
       Serial.printf("连接失败, 状态码=%d, 5秒后重试...\n", client.state());
       switch (client.state()) 
       {
@@ -229,6 +268,9 @@ void sendSensorData(double data)
   if (client.publish(pubTopic, payload.c_str())) 
   {
     Serial.println("数据已发送: " + payload);
+    Serial.println();
+    Serial.printf("%s.val=%d\xff\xff\xff",lcd_names[asr],(int)data);
+    delay(200);
   } 
   else 
   {
