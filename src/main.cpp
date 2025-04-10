@@ -87,7 +87,6 @@ void loop() {
     Serial.printf("\xff\xff\xff");
     Serial.printf("b1.bco=64528\xff\xff\xff");
     Serial.printf("b1.bco2=64528\xff\xff\xff");
-    setup_wifi();
   }
   else 
   { 
@@ -109,10 +108,12 @@ void loop() {
   }
   client.loop();
   
-  if (Serial.available()) {
+  if (Serial.available()) 
+  {
     int len = Serial.readBytes(lcd_data, 128);
 
-    for (int i = 0; i < len ; i++) {
+    for (int i = 0; i < len ; i++) 
+    {
       if (lcd_data[i] == 0x55 && (lcd_data[i + 1] == 0x01 || lcd_data[i + 1] == 0x02)) 
       {
         uint8_t type = lcd_data[i + 1];
@@ -151,7 +152,8 @@ void loop() {
       }
     }
 
-    if (ssid.length() > 0 && password.length() > 0) {
+    if (ssid.length() > 0 && password.length() > 0) 
+    {
       Serial.println("SSID: " + ssid);
       Serial.println("Password: " + password);
       setup_wifi(); // 自定义函数连接 WiFi
@@ -286,7 +288,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 /************* 连接 MQTT 服务器 *************/
 void reconnect() {
-  while (!client.connected()) 
+  int t=2;
+  while (!client.connected()&&t>0) 
   {
     Serial.printf("\xff\xff\xff");
     Serial.printf("t13.bco=64528\xff\xff\xff");
@@ -322,6 +325,7 @@ void reconnect() {
       }
       delay(5000);
     }
+    t--;
   }
 }
 
