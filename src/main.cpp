@@ -18,8 +18,8 @@ void reconnect();
 void sendSensorData(double data) ;
 
 /************** WiFi 配置 **************/
-const char* ssid = "abc";         // WiFi SSID
-const char* password = "12345678"; // WiFi 密码
+String ssid = "abc";         // WiFi SSID
+String password = "12345678"; // WiFi 密码
 
 /************ OneNet MQTT 配置 ************/
 const char* mqtt_server = "mqtts.heclouds.com";  
@@ -80,22 +80,87 @@ void setup() {
 /************* 主循环 *************/
 void loop() {
 
-  /* 屏幕状态显示 */
+  /* 屏幕联动 */
+  byte lcd_data[128];
   if(WiFi.status() != WL_CONNECTED)
-  Serial.printf("t6.pco=RED\xff\xff\xff");
+  {
+    Serial.printf("\xff\xff\xff");
+    Serial.printf("b1.bco=64528\xff\xff\xff");
+    Serial.printf("b1.bco2=64528\xff\xff\xff");
+    delay(500);
+    setup_wifi();
+  }
   else 
-  Serial.printf("t6.pco=GREEN\xff\xff\xff");
-  delay(200);
+  { 
+    Serial.printf("\xff\xff\xff");
+    Serial.printf("b1.bco=GREEN\xff\xff\xff");
+    Serial.printf("b1.bco2=GREEN\xff\xff\xff");
+    delay(500);
+  }
+  
   if(!client.connected())
   {
-    Serial.printf("t7.pco=RED\xff\xff\xff");
+    Serial.printf("\xff\xff\xff");
+    Serial.printf("t13.bco=64528\xff\xff\xff\n");
+    delay(500);
     reconnect();
   }
   else 
-  Serial.printf("t7.pco=GREEN\xff\xff\xff");
-  delay(200);
-
+  {
+    Serial.printf("\xff\xff\xff");
+    Serial.printf("t13.bco=GREEN\xff\xff\xff\n");
+    delay(500);
+  }
   client.loop();
+  
+  if (Serial.available()) {
+    int len = Serial.readBytes(lcd_data, 128);
+
+    for (int i = 0; i < len ; i++) {
+      if (lcd_data[i] == 0x55 && (lcd_data[i + 1] == 0x01 || lcd_data[i + 1] == 0x02)) 
+      {
+        uint8_t type = lcd_data[i + 1];
+        int data_start = i + 2;
+
+        // 查找包尾 0x0D 0x0A
+        int data_end = -1;
+        for (int j = data_start; j < len - 1; j++) 
+        {
+          if (lcd_data[j] == 0x0D && lcd_data[j + 1] == 0x0A) 
+          {
+            data_end = j;
+            break;
+          }
+        }
+
+        if (data_end != -1) {
+          char temp[128] = {0};
+          int k = 0;
+          for (int j = data_start; j < data_end && k < 127; j++) 
+          {
+            temp[k++] = (char)lcd_data[j];
+          }
+          temp[k] = '\0'; 
+
+          if (type == 0x01) 
+          {
+            ssid = String(temp);
+          } 
+          else if (type == 0x02) 
+          {
+            password = String(temp);
+          }
+          i = data_end + 1; 
+        }
+      }
+    }
+
+    if (ssid.length() > 0 && password.length() > 0) {
+      Serial.println("SSID: " + ssid);
+      Serial.println("Password: " + password);
+      setup_wifi(); // 自定义函数连接 WiFi
+    }
+  }
 
 
   // 发送请求
@@ -180,25 +245,36 @@ void parseModbusData(const uint8_t *data, uint16_t len) {
 /************* WiFi 连接 *************/
 void setup_wifi() {
   Serial.println("连接 WiFi...");
-
-  Serial.printf("t6.pco=RED\xff\xff\xff");
-  delay(200);
-
   WiFi.begin(ssid, password);
 
-  while (WiFi.status() != WL_CONNECTED) 
+  int t=5;
+  while (WiFi.status() != WL_CONNECTED&&t>0) 
   {
     delay(1000);
     Serial.print(".");
+    t--;
   }
 
-  Serial.println("\nWiFi 连接成功!");
+  if(WiFi.status() == WL_CONNECTED)
+  {
+    Serial.println("\nWiFi 连接成功!");
+    Serial.print("IP 地址: ");
+    Serial.println(WiFi.localIP());
+  
+    Serial.printf("\xff\xff\xff");
+    Serial.printf("b1.bco=GREEN\xff\xff\xff");
+    Serial.printf("b1.bco2=GREEN\xff\xff\xff");
+    delay(500);
+  }
+  else
+  {
+    Serial.printf("\xff\xff\xff");
+    Serial.printf("b1.bco=64528\xff\xff\xff");
+    Serial.printf("b1.bco2=64528\xff\xff\xff");
+    delay(500);
+  }
+  
 
-  Serial.printf("t6.pco=GREEN\xff\xff\xff");
-  delay(200);
-
-  Serial.print("IP 地址: ");
-  Serial.println(WiFi.localIP());
 }
 
 /************* MQTT 订阅回调函数 *************/
@@ -218,7 +294,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void reconnect() {
   while (!client.connected()) 
   {
-    Serial.printf("t7.pco=RED\xff\xff\xff");
+    Serial.printf("\xff\xff\xff");
+    Serial.printf("t13.bco=64528\xff\xff\xff");
     delay(200);
 
     Serial.print("连接 OneNet MQTT...");
@@ -226,14 +303,16 @@ void reconnect() {
     {
       Serial.println("连接成功!\n");
 
-      Serial.printf("t7.pco=GREEN\xff\xff\xff");
+      Serial.printf("\xff\xff\xff");
+      Serial.printf("t13.bco=GREEN\xff\xff\xff");
       delay(200);
 
       client.subscribe(replyTopic); // 订阅属性下发
     } 
     else 
     {
-      Serial.printf("t7.bco=RED\xff\xff\xff");
+      Serial.printf("\xff\xff\xff");
+      Serial.printf("t13.bco=64528\xff\xff\xff");
       delay(200);
 
       Serial.printf("连接失败, 状态码=%d, 5秒后重试...\n", client.state());
