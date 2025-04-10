@@ -87,7 +87,6 @@ void loop() {
     Serial.printf("\xff\xff\xff");
     Serial.printf("b1.bco=64528\xff\xff\xff");
     Serial.printf("b1.bco2=64528\xff\xff\xff");
-    delay(500);
     setup_wifi();
   }
   else 
@@ -95,21 +94,18 @@ void loop() {
     Serial.printf("\xff\xff\xff");
     Serial.printf("b1.bco=GREEN\xff\xff\xff");
     Serial.printf("b1.bco2=GREEN\xff\xff\xff");
-    delay(500);
   }
   
   if(!client.connected())
   {
     Serial.printf("\xff\xff\xff");
     Serial.printf("t13.bco=64528\xff\xff\xff\n");
-    delay(500);
     reconnect();
   }
   else 
   {
     Serial.printf("\xff\xff\xff");
     Serial.printf("t13.bco=GREEN\xff\xff\xff\n");
-    delay(500);
   }
   client.loop();
   
@@ -264,14 +260,12 @@ void setup_wifi() {
     Serial.printf("\xff\xff\xff");
     Serial.printf("b1.bco=GREEN\xff\xff\xff");
     Serial.printf("b1.bco2=GREEN\xff\xff\xff");
-    delay(500);
   }
   else
   {
     Serial.printf("\xff\xff\xff");
     Serial.printf("b1.bco=64528\xff\xff\xff");
     Serial.printf("b1.bco2=64528\xff\xff\xff");
-    delay(500);
   }
   
 
@@ -296,7 +290,6 @@ void reconnect() {
   {
     Serial.printf("\xff\xff\xff");
     Serial.printf("t13.bco=64528\xff\xff\xff");
-    delay(200);
 
     Serial.print("连接 OneNet MQTT...");
     if (client.connect(device_id, product_id, api_key)) 
@@ -305,7 +298,6 @@ void reconnect() {
 
       Serial.printf("\xff\xff\xff");
       Serial.printf("t13.bco=GREEN\xff\xff\xff");
-      delay(200);
 
       client.subscribe(replyTopic); // 订阅属性下发
     } 
@@ -313,7 +305,6 @@ void reconnect() {
     {
       Serial.printf("\xff\xff\xff");
       Serial.printf("t13.bco=64528\xff\xff\xff");
-      delay(200);
 
       Serial.printf("连接失败, 状态码=%d, 5秒后重试...\n", client.state());
       switch (client.state()) 
