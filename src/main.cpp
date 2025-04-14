@@ -22,15 +22,15 @@ String ssid = "abc";         // WiFi SSID
 String password = "12345678"; // WiFi 密码
 
 /************ OneNet MQTT 配置 ************/
-const char* mqtt_server = "mqtts.heclouds.com";  
-const int mqtt_port = 1883; 
-const char* device_id = "test-v1";    
-const char* product_id = "ix3yxLe12r"; 
-const char* api_key = "version=2018-10-31&res=products%2Fix3yxLe12r%2Fdevices%2Ftest-v1&et=999986799814791288&method=md5&sign=aLfwfxqst6gFtQuC3WhnLA%3D%3D";
+const char* mqtt_server = ;  
+const int mqtt_port = ; 
+const char* device_id = ;    
+const char* product_id = ; 
+const char* api_key = ;
 
 /************** MQTT 主题 ***************/
-const char* pubTopic = "$sys/ix3yxLe12r/test-v1/thing/property/post";
-const char* replyTopic="$sys/ix3yxLe12r/test-v1/thing/property/post/reply";
+const char* pubTopic = "$sys/ix3yxLe12r/test-v2/thing/property/post";
+const char* replyTopic="$sys/ix3yxLe12r/test-v2/thing/property/post/reply";
 
 
 WiFiClient espClient;
@@ -343,6 +343,7 @@ void sendSensorData(double data)
   {
     Serial.println("数据已发送: " + payload);
     Serial.println();
+    Serial.printf("\xff\xff\xff");
     Serial.printf("%s.val=%d\xff\xff\xff",lcd_names[asr],(int)data);
     delay(200);
   } 
