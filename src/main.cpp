@@ -21,16 +21,6 @@ void sendSensorData(double data) ;
 String ssid = "abc";         // WiFi SSID
 String password = "12345678"; // WiFi 密码
 
-/************ OneNet MQTT 配置 ************/
-const char* mqtt_server = ;  
-const int mqtt_port = ; 
-const char* device_id = ;    
-const char* product_id = ; 
-const char* api_key = ;
-
-/************** MQTT 主题 ***************/
-const char* pubTopic = ;
-const char* replyTopic=;
 
 
 WiFiClient espClient;
@@ -98,13 +88,15 @@ void loop() {
   if(!client.connected())
   {
     Serial.printf("\xff\xff\xff");
-    Serial.printf("t13.bco=64528\xff\xff\xff\n");
+    Serial.printf("b2.bco=64528\xff\xff\xff");
+    Serial.printf("b2.bco2=64528\xff\xff\xff");
     reconnect();
   }
   else 
   {
     Serial.printf("\xff\xff\xff");
-    Serial.printf("t13.bco=GREEN\xff\xff\xff\n");
+    Serial.printf("b2.bco=GREEN\xff\xff\xff");
+    Serial.printf("b2.bco2=GREEN\xff\xff\xff");
   }
   client.loop();
   
@@ -292,7 +284,8 @@ void reconnect() {
   while (!client.connected()&&t>0) 
   {
     Serial.printf("\xff\xff\xff");
-    Serial.printf("t13.bco=64528\xff\xff\xff");
+    Serial.printf("b2.bco=64528\xff\xff\xff");
+    Serial.printf("b2.bco2=64528\xff\xff\xff");
 
     Serial.print("连接 OneNet MQTT...");
     if (client.connect(device_id, product_id, api_key)) 
@@ -300,28 +293,35 @@ void reconnect() {
       Serial.println("连接成功!\n");
 
       Serial.printf("\xff\xff\xff");
-      Serial.printf("t13.bco=GREEN\xff\xff\xff");
+      Serial.printf("b2.bco=GREEN\xff\xff\xff");
+      Serial.printf("b2.bco2=GREEN\xff\xff\xff");
 
       client.subscribe(replyTopic); // 订阅属性下发
     } 
     else 
     {
       Serial.printf("\xff\xff\xff");
-      Serial.printf("t13.bco=64528\xff\xff\xff");
+      Serial.printf("b2.bco=64528\xff\xff\xff");
+      Serial.printf("b2.bco2=64528\xff\xff\xff");
 
       Serial.printf("连接失败, 状态码=%d, 5秒后重试...\n", client.state());
+
+      Serial.printf("\xff\xff\xff");
+      Serial.printf("errornum.txt=\"E%s\"\xff\xff\xff",(String)client.state());
+
+      Serial.printf("\xff\xff\xff");
       switch (client.state()) 
       {
-        case -4: Serial.println("连接超时"); break;
-        case -3: Serial.println("连接丢失"); break;
-        case -2: Serial.println("连接失败"); break;
-        case -1: Serial.println("断开连接"); break;
-        case 1: Serial.println("协议错误"); break;
-        case 2: Serial.println("客户端标识无效"); break;
-        case 3: Serial.println("服务器不可用"); break;
-        case 4: Serial.println("用户名或密码错误"); break;
-        case 5: Serial.println("未授权"); break;
-        default: Serial.println("未知错误");
+        case -4: Serial.printf("errormag.txt=\"连接超时\"\xff\xff\xff"); break;
+        case -3: Serial.printf("errormag.txt=\"连接丢失\"\xff\xff\xff"); break;
+        case -2: Serial.printf("errormag.txt=\"连接失败\"\xff\xff\xff"); break;
+        case -1: Serial.printf("errormag.txt=\"断开连接\"\xff\xff\xff"); break;
+        case 1: Serial.printf("errormag.txt=\"协议错误\"\xff\xff\xff"); break;
+        case 2: Serial.printf("errormag.txt=\"客户端标识无效\"\xff\xff\xff"); break;
+        case 3: Serial.printf("errormag.txt=\"服务器不可用\"\xff\xff\xff"); break;
+        case 4: Serial.printf("errormag.txt=\"用户名或密码错误\"\xff\xff\xff"); break;
+        case 5: Serial.printf("errormag.txt=\"未授权\"\xff\xff\xff"); break;
+        default: Serial.printf("errormag.txt=\"未知错误\"\xff\xff\xff");
       }
       delay(5000);
     }
