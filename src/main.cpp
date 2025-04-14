@@ -29,8 +29,8 @@ const char* product_id = ;
 const char* api_key = ;
 
 /************** MQTT 主题 ***************/
-const char* pubTopic = "$sys/ix3yxLe12r/test-v2/thing/property/post";
-const char* replyTopic="$sys/ix3yxLe12r/test-v2/thing/property/post/reply";
+const char* pubTopic = ;
+const char* replyTopic=;
 
 
 WiFiClient espClient;
