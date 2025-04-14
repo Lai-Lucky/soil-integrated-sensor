@@ -22,7 +22,6 @@ String ssid = "abc";         // WiFi SSID
 String password = "12345678"; // WiFi 密码
 
 
-
 WiFiClient espClient;
 PubSubClient client(espClient);
 
@@ -46,12 +45,12 @@ const char* sensor_names[] = {"soil-PH"/*酸碱度*/,
 
 
 /************ 串口屏属性标识符 ************/
-const char* lcd_names[] = {"n0"/*酸碱度*/, 
-                           "n1"/*温度*/, 
-                           "n2"/*湿度*/, 
-                           "n3"/*氮*/, 
-                           "n4"/*磷*/, 
-                           "n5"/*钾*/};
+const char* lcd_names[] = {"x0"/*酸碱度*/, 
+                           "x1"/*温度*/, 
+                           "x2"/*湿度*/, 
+                           "x3"/*氮*/, 
+                           "x4"/*磷*/, 
+                           "x5"/*钾*/};
 
 /******** 变量 ********/
 byte temp[7]; // 传感器返回数据
@@ -97,6 +96,8 @@ void loop() {
     Serial.printf("\xff\xff\xff");
     Serial.printf("b2.bco=GREEN\xff\xff\xff");
     Serial.printf("b2.bco2=GREEN\xff\xff\xff");
+    Serial.printf("errormag.txt=\" \"\xff\xff\xff");
+    Serial.printf("errornum.txt=\" \"\xff\xff\xff");
   }
   client.loop();
   
@@ -180,6 +181,9 @@ void loop() {
 
   delay(1000);
 }
+
+
+
 
 /************* CRC 计算 *************/
 uint16_t CRC16(const uint8_t *data, uint16_t length) {
@@ -295,6 +299,8 @@ void reconnect() {
       Serial.printf("\xff\xff\xff");
       Serial.printf("b2.bco=GREEN\xff\xff\xff");
       Serial.printf("b2.bco2=GREEN\xff\xff\xff");
+      Serial.printf("errormag.txt=\" \"\xff\xff\xff");
+      Serial.printf("errornum.txt=\" \"\xff\xff\xff");
 
       client.subscribe(replyTopic); // 订阅属性下发
     } 
@@ -344,6 +350,7 @@ void sendSensorData(double data)
     Serial.println("数据已发送: " + payload);
     Serial.println();
     Serial.printf("\xff\xff\xff");
+    data*=10.0;
     Serial.printf("%s.val=%d\xff\xff\xff",lcd_names[asr],(int)data);
     delay(200);
   } 
