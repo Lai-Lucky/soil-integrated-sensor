@@ -22,6 +22,7 @@ String ssid = "abc";         // WiFi SSID
 String password = "12345678"; // WiFi 密码
 
 
+
 WiFiClient espClient;
 PubSubClient client(espClient);
 
@@ -69,6 +70,7 @@ void setup() {
 /************* 主循环 *************/
 void loop() {
 
+
   /* 屏幕联动 */
   byte lcd_data[128];
   if(WiFi.status() != WL_CONNECTED)
@@ -100,6 +102,7 @@ void loop() {
     Serial.printf("errornum.txt=\" \"\xff\xff\xff");
   }
   client.loop();
+ 
   
   if (Serial.available()) 
   {
@@ -166,8 +169,11 @@ void loop() {
     int len = Serial2.available();
     Serial2.readBytes(temp, len);
     Serial.println("接收传感器数据");
+    Serial.println();
+
     parseModbusData(temp, len);
 
+    /*CRC校验*/
     if (checkCRC(temp, len)) 
     {
       Serial.println("CRC 校验成功\n");
@@ -177,6 +183,7 @@ void loop() {
     {
       Serial.println("CRC 校验失败\n");
     }
+    
   }
 
   delay(1000);
@@ -184,11 +191,12 @@ void loop() {
 
 
 
-
-/************* CRC 计算 *************/
-uint16_t CRC16(const uint8_t *data, uint16_t length) {
+/************* CRC 校验 *************/
+bool checkCRC(const uint8_t *data, uint16_t len) {
+  if (len < 3) return false;
   uint16_t crc = 0xFFFF;
-  for (uint16_t i = 0; i < length; i++) 
+
+  for (uint16_t i = 0; i < len - 2; i++) 
   {
     crc ^= data[i];
     for (uint8_t j = 0; j < 8; j++) 
@@ -196,15 +204,9 @@ uint16_t CRC16(const uint8_t *data, uint16_t length) {
       crc = (crc & 1) ? (crc >> 1) ^ 0xA001 : crc >> 1;
     }
   }
-  return crc;
-}
 
-/************* CRC 校验 *************/
-bool checkCRC(const uint8_t *data, uint16_t len) {
-  if (len < 3) return false;
-  uint16_t computedCRC = CRC16(data, len - 2);
   uint16_t receivedCRC = data[len - 2] | (data[len - 1] << 8);
-  return computedCRC == receivedCRC;
+  return crc == receivedCRC;
 }
 
 /************* 解析数据并上传 *************/
@@ -241,7 +243,7 @@ void setup_wifi() {
   Serial.println("连接 WiFi...");
   WiFi.begin(ssid, password);
 
-  int t=5;
+  int t=3;
   while (WiFi.status() != WL_CONNECTED&&t>0) 
   {
     delay(1000);
@@ -291,10 +293,10 @@ void reconnect() {
     Serial.printf("b2.bco=64528\xff\xff\xff");
     Serial.printf("b2.bco2=64528\xff\xff\xff");
 
-    Serial.print("连接 OneNet MQTT...");
+    // Serial.print("连接 OneNet MQTT...");
     if (client.connect(device_id, product_id, api_key)) 
     {
-      Serial.println("连接成功!\n");
+      // Serial.println("连接成功!\n");
 
       Serial.printf("\xff\xff\xff");
       Serial.printf("b2.bco=GREEN\xff\xff\xff");
@@ -310,7 +312,7 @@ void reconnect() {
       Serial.printf("b2.bco=64528\xff\xff\xff");
       Serial.printf("b2.bco2=64528\xff\xff\xff");
 
-      Serial.printf("连接失败, 状态码=%d, 5秒后重试...\n", client.state());
+      // Serial.printf("连接失败, 状态码=%d, 重试...\n", client.state());
 
       Serial.printf("\xff\xff\xff");
       Serial.printf("errornum.txt=\"E%s\"\xff\xff\xff",(String)client.state());
@@ -329,7 +331,7 @@ void reconnect() {
         case 5: Serial.printf("errormag.txt=\"未授权\"\xff\xff\xff"); break;
         default: Serial.printf("errormag.txt=\"未知错误\"\xff\xff\xff");
       }
-      delay(5000);
+      delay(500);
     }
     t--;
   }
@@ -349,15 +351,15 @@ void sendSensorData(double data)
   {
     Serial.println("数据已发送: " + payload);
     Serial.println();
-    Serial.printf("\xff\xff\xff");
-    data*=10.0;
-    Serial.printf("%s.val=%d\xff\xff\xff",lcd_names[asr],(int)data);
-    delay(200);
   } 
   else 
   {
     Serial.println("发送失败");
   }
+
+  Serial.printf("\xff\xff\xff");
+  data*=10.0;
+  Serial.printf("%s.val=%d\xff\xff\xff",lcd_names[asr],(int)data);
 
   delay(200);
 }
