@@ -21,8 +21,6 @@ void ZigBeec_controller(int switchs);
 
 
 void soilsensor_task_vtask(void *pv); //土壤传感器任务
-void ZigBee_task_vtask(void *pv); // ZigBee任务
-
 
 TaskHandle_t soilsensor_task_handle;  //土壤传感器任务句柄
 
